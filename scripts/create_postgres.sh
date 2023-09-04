@@ -6,6 +6,7 @@ ROOT_DIR=$(pwd)
 
 if command -v docker &>/dev/null; then
     printf "Docker looks to be available $(which docker)"
+    DOCKER=docker
 elif command -v podman &>/dev/null; then
     printf "Podman will be used. $(which podman)"
     DOCKER=podman
@@ -28,5 +29,5 @@ if command -v $GOOSE &>/dev/null; then
     cd $ROOT_DIR/repository/migrations
 
     printf "\nRunning migrations $(pwd)"
-    $GOOSE postgres "host=http://localhost:5432 user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=disable" up
+    $GOOSE postgres "user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=disable" up
 fi
