@@ -19,9 +19,9 @@ type ConnectionOptions struct {
 }
 
 func NewPsqlRepo(options ConnectionOptions) (*dbRepo, error) {
-	db, err := sql.Open("postgres", fmt.Sprintf("user=%s db=%s sslmode=disabled password=%s", options.Username, options.Database, options.Password))
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", options.Hostname, options.Username, options.Database, options.Password))
 	if err != nil {
-		return nil, fmt.Errorf("error connectiong to db: %v", err)
+		return nil, fmt.Errorf("error connecting to database: %v", err)
 	}
 	return &dbRepo{
 		db: db,
@@ -30,28 +30,19 @@ func NewPsqlRepo(options ConnectionOptions) (*dbRepo, error) {
 }
 
 func (r *dbRepo) Get(id int64) (PeerInfo, error) {
-	row := r.db.QueryRow("SELECT * FROM conductor where id=?", id)
+	row := r.db.QueryRow("SELECT * FROM peers where id=$1", id)
 	newPeerInfo := PeerInfo{}
-	err := row.Scan(&newPeerInfo.Id, &newPeerInfo.Ip, &newPeerInfo.TransactionHash, &newPeerInfo.FileHash)
+	err := row.Scan(&newPeerInfo.Id, &newPeerInfo.Ip, &newPeerInfo.TransactionHash)
 
 	return newPeerInfo, err
 }
 
-func (r *dbRepo) Store(p PeerInfo) (int64, error) {
-	ins, err := r.db.Prepare("INSERT INTO conductor VALUES(NULL, ?,?,?)")
+func (r *dbRepo) Store(p PeerInfo) (string, error) {
+	var lastInsertedId string
+	err := r.db.QueryRow("INSERT INTO peers VALUES($1, $2, $3) RETURNING id", p.Id, p.Ip, p.TransactionHash).Scan(&lastInsertedId)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
-	defer ins.Close()
-
-	res, err := ins.Exec(p.Ip, p.TransactionHash, p.FileHash)
-	if err != nil {
-		return 0, err
-	}
-	var lastId int64
-	if lastId, err = res.LastInsertId(); err != nil {
-		return 0, err
-	}
-	return lastId, nil
+	return lastInsertedId, nil
 }

@@ -1,9 +1,17 @@
 package server
 
-import "github.com/Serares/conductor/repository"
+import (
+	"os"
+
+	"github.com/Serares/conductor/repository"
+)
 
 func getRepo() (repository.Repository, error) {
-	repo, err := repository.NewPsqlRepo()
+	username := os.Getenv("PSQL_USERNAME")
+	password := os.Getenv("PSQL_PASSWORD")
+	db := os.Getenv("PSQL_DB")
+	host := os.Getenv("PSQL_HOST")
+	repo, err := repository.NewPsqlRepo(repository.ConnectionOptions{Username: username, Password: password, Database: db, Hostname: host})
 	if err != nil {
 		return nil, err
 	}

@@ -1,14 +1,12 @@
 package repository
 
 type PeerInfo struct {
-	Id              int64
+	Id              string
 	Ip              string
 	TransactionHash string
-	FileHash        string
-	PubKey          string // used to encrypt the files before sending them
 }
 
 type Repository interface {
-	Store(p PeerInfo) (int64, error)
+	Store(p PeerInfo) (string, error)
 	Get(id int64) (PeerInfo, error)
 }
